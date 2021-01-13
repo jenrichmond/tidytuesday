@@ -1,0 +1,106 @@
+---
+title: "voters"
+author: "Jen Richmond"
+date: "09/10/2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r message=FALSE, warning=FALSE}
+library(tidyverse)
+library(RCurl)
+
+library(tidyverse)
+
+library(usmap)
+
+```
+
+```{r}
+voters <- read.csv(text=getURL("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2018-10-09/voter_turnout.csv"), header = T)
+```
+
+```{r}
+president_years <- seq(1980, 2012, 4)
+midterm_years <- seq(1982, 2014, 4)
+```
+
+```{r}
+
+glimpse(voters)
+```
+
+
+```{r}
+just2008 <- voters %>%
+  filter(year == 2008) %>%
+ filter(alphanumeric_state_code != "UnitedStates") %>%
+  mutate(percentvoting = votes/eligible_voters*100) 
+```
+
+```{r}
+pre_postObama <- voters %>%
+  filter(year %in% c("2004", "2008", "2012")) %>%
+ filter(alphanumeric_state_code != 0) %>%
+  mutate(percentvoting = votes/eligible_voters*100) 
+  
+```
+
+```{r}
+glimpse(just2008)
+```
+Examples from usmap package documentation
+
+```{r}
+library(usmap)
+library(ggplot2)
+
+plot_usmap(regions = "states") + 
+  labs(title = "USA States", subtitle = "This is a blank map of the states of the United States.") + 
+  theme(panel.background = element_rect(colour = "black", fill = "lightblue"))
+```
+Fill states by population
+```{r}
+library(usmap)
+library(ggplot2)
+
+plot_usmap(data = statepop, values = "pop_2015", lines = "red") + 
+  scale_fill_continuous(name = "Population (2015)", label = scales::comma) + 
+  theme(legend.position = "right")
+```
+Change fill to red. 
+```{r}
+library(usmap)
+library(ggplot2)
+
+plot_usmap(data = statepop, values = "pop_2015", lines = "red") + 
+  scale_fill_continuous(
+    low = "white", high = "red", name = "Population (2015)", label = scales::comma
+  ) + theme(legend.position = "right")
+```
+```{r}
+ggsave("redmap.png")
+```
+
+
+```{r}
+statepop <- statepop
+```
+
+Adapt to voter data
+```{r}
+
+library(usmap)
+library(ggplot2)
+
+plot_usmap(data = just2008, values = "percentvoting", lines = "red") + 
+  scale_fill_continuous(
+    low = "white", high = "red", name = "Voting", label = scales::comma
+  ) + theme(legend.position = "right")
+```
+```
+

@@ -1,0 +1,40 @@
+---
+title: "tidy tuesday"
+author: "Jenny"
+date: "17 October 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+#Tidy Tuesday Screencast
+
+http://varianceexplained.org/r/tidy-tuesday-college-major/
+
+```{r}
+library(tidyverse)
+
+theme_set(theme_light())
+```
+
+```{r}
+recent_grads <- read_csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2018-10-16/recent-grads.csv")
+```
+
+```{r}
+recent_grads %>%
+  ggplot(aes(Median)) +
+  geom_histogram()
+```
+
+Sort the majors by median earnings, then plot boxplot. 
+```{r}
+recent_grads %>%
+  mutate(Major_category = fct_reorder(Major_category, Median)) %>%
+  ggplot(aes(x = Major_category, y= Median)) +
+  geom_boxplot() +
+  coord_flip()
+```
+

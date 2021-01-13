@@ -1,0 +1,23 @@
+---
+title: "honey"
+author: "Jen Richmond"
+date: "26/05/2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tidyverse)
+honey <- read.csv("honeyproduction.csv")
+glimpse(honey)
+```
+```{r}
+
+  ggplot(honey, aes(x=year, y=numcol)) +
+  geom_col() + facet_wrap("state")
+  
+```
+

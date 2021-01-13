@@ -1,0 +1,95 @@
+---
+title: "births"
+author: "Jen Richmond"
+date: "03/10/2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r message=FALSE, warning=FALSE}
+library(tidyverse)
+library(RCurl)
+library(plotly)
+```
+
+```{r}
+births <- read.csv(text=getURL("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2018-10-02/us_births_2000-2014.csv"), header = T)
+
+```
+
+```{r}
+summary <- births %>%
+  group_by(month, day_of_week) %>%
+  summarise(meanbirths = mean(births))
+
+summary$month <- as.factor(summary$month)
+summary$day_of_week <- as.factor(summary$day_of_week)
+
+(summary)
+ 
+```
+
+```{r}
+ summary %>% 
+  ggplot(aes(x = month, y= meanbirths, fill = day_of_week)) +
+  geom_col() 
+ 
+```
+
+```{r}
+summary %>%
+  ggplot(aes(x= day_of_week, y= meanbirths, fill = month)) +
+  geom_col()
+```
+```{r}
+ggsave("byday.png")
+```
+
+ggsave(name_of_figure.jpg)
+
+```{r}
+bubs25 <- births %>%
+  filter(date_of_month == 25) %>%
+  group_by(month, day_of_week) %>%
+  summarise(meanbubs25 = mean(births))
+```
+
+```{r}
+
+
+bubs25$month <- as.factor(bubs25$month)
+bubs25$day_of_week <- as.factor(bubs25$day_of_week)
+
+glimpse(bubs25)
+```
+
+```{r}
+bubs25 %>%
+  ggplot(aes(x= month, y= meanbubs25, fill = day_of_week)) +
+  geom_col() +
+  ggtitle("Babies born on the 25th of the month")
+
+ggsave("xmasbaby.png")
+```
+
+```{r}
+bubs31 <- births %>%
+  filter(date_of_month == 31) %>%
+  group_by(month, day_of_week) %>%
+  summarise(meanbubs31 = mean(births))
+
+bubs31 %>%
+  ggplot(aes(x= month, y= meanbubs31)) +
+  geom_col()
+```
+
+
+
+
+```{r}
+glimpse(summary)
+```
+

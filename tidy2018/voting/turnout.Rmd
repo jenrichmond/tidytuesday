@@ -1,0 +1,110 @@
+---
+title: "voter_turnout"
+author: "Jen Richmond"
+date: "10/10/2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tidyverse)
+library(maps)
+library(RCurl)
+library(gganimate)
+library(beepr)
+library(transformr)
+```
+
+
+```{r}
+president_years <- seq(1980, 2012, 4)
+
+voterdata <- read.csv(text=getURL("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2018-10-09/voter_turnout.csv"), header = T)
+```
+
+
+
+```{r}
+voter_turnout <- voterdata %>%
+  mutate(turnout = votes/eligible_voters) %>%
+  select(-X, -icpsr_state_code, -alphanumeric_state_code)
+
+
+pres_turnout <- voter_turnout %>%
+  filter(year %in% president_years) %>%
+  select(-votes, -eligible_voters) %>%
+  spread(year, turnout)
+```
+
+
+```{r}
+usa_df <- map_data("state") %>%
+  mutate(state = str_to_title(region)) %>% #add capital letter to region and call it state
+  select(-region) %>% #drop region column
+  left_join(pres_turnout, by = "state") %>%
+  gather(year, turnout, as.character(president_years))
+```
+
+
+##make static plot first
+
+```{r}
+staticplot <- ggplot(usa_df, mapping = aes(x=long, y=lat, group = group, fill = turnout)) +
+  geom_polygon(color= "black") +
+  theme(panel.background = element_blank(), axis.text = element_blank()) +
+  labs(title = "voter turnout", height = 400, width = 600)
+```
+
+
+
+
+```{r}
+print(staticplot)
+```
+
+```{r}
+
+usa_df$year <- as.numeric(usa_df$year)
+glimpse(usa_df)
+```
+
+#then animate it
+
+this works but puts together some twitter and thomasp code. will it work with just thomasp code?
+```{r}
+
+
+```
+###This also works, now need to pretty...
+```{r}
+ggplot(usa_df, mapping = aes(x=long, y=lat, group = group, fill = turnout)) +
+  geom_polygon(color= "black") +
+  theme(panel.background = element_blank(), axis.text = element_blank()) + 
+  #this is the animation bit
+  labs(title = 'year') +
+  transition_time(year) +
+  ease_aes('linear')
+
+
+beep("fanfare")
+```
+
+Following the Rladies membership tut...
+```{r}
+library(maps)
+library(tidyverse)
+library(ggthemes)
+library(gganimate)
+
+usa <- ggplot() +
+  borders("usa", colour = "black", fill = "gray" +
+            theme_map())
+
+print(usa)
+```
+
+
+

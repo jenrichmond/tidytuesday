@@ -1,0 +1,123 @@
+---
+title: "starwars"
+author: "Jen Richmond"
+date: "18/05/2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+
+```{r}
+library(tidyverse)
+library(fivethirtyeight)
+library(readr)
+```
+
+```{r}
+data() #read list of data from installed packages
+```
+
+##Learned how to read a csv file straight from github. 
+```{r}
+
+starwars <- read_csv("https://raw.githubusercontent.com/fivethirtyeight/data/master/star-wars-survey/StarWars.csv")
+starwars <- as.data.frame(starwars) #force it into a dataframe in case its not
+starwars <- starwars[-1,] #delete the first row
+names(starwars)
+
+```
+## Using select to choose just the interesting columns
+```{r}
+starwarsbasic <- starwars %>%
+select("Gender", "Age", "Education", "Have you seen any of the 6 films in the Star Wars franchise?", "Do you consider yourself to be a fan of the Star Wars film franchise?") %>%
+rename(seen = "Have you seen any of the 6 films in the Star Wars franchise?", fan = "Do you consider yourself to be a fan of the Star Wars film franchise?")
+
+glimpse(starwarsbasic)
+```
+```{r}
+
+```
+## Turn char in factors
+```{r}
+# Invoke as.factor method on dataframe$columnName
+starwarsbasic$Gender <- as.factor(starwarsbasic$Gender)
+starwarsbasic$Age <- as.factor(starwarsbasic$Age)
+starwarsbasic$Education <- as.factor(starwarsbasic$Education)
+starwarsbasic$seen <- as.factor(starwarsbasic$seen)
+starwarsbasic$fan <- as.factor(starwarsbasic$fan)
+summary(starwarsbasic)
+```
+
+## plot rates of seeing any Starwars by gender, there are NAs 
+```{r}
+ggplot(starwarsbasic, aes(x = seen, fill = Gender)) +
+  geom_bar()
+```
+
+##new data frame filter just gender female and male
+```{r}
+starwarsgender <- 
+filter(starwarsbasic, Gender == "Female" | Gender == "Male") 
+summary(starwarsgender)
+
+```
+## plot seen by gender
+```{r}
+ggplot(starwarsgender, aes(x = seen, fill = Gender)) +
+  geom_bar()
+```
+## plot gender by seen
+```{r}
+ggplot(starwarsgender, aes(x = Gender, fill = seen)) +
+  geom_bar()
+```
+##plot age by seen, facetting by gender. Even reordered age chronologically
+
+```{r}
+starwarsgender$Age<-factor(starwarsgender$Age, levels=c("18-29", "30-44", "45-60", "> 60"), ordered=TRUE)
+ggplot(starwarsgender, aes(x = Age, fill = seen)) +
+  geom_bar() +
+  facet_wrap(~ Gender)
+```
+
+
+```{r eval=FALSE, include=FALSE}
+install.packages(magick)
+
+```
+
+```{r}
+starwarsgender$Age<-factor(starwarsgender$Age, levels=c("18-29", "30-44", "45-60", "> 60"), ordered=TRUE)
+ggplot(starwarsgender, aes(x = Age, fill = seen)) +
+  geom_bar() +
+  facet_wrap(~ Gender) +
+  ggsave(filename = "starwars.png", width = 5, height = 4, dpi = 300)
+```
+
+```{r}
+library(magick)
+starwarsplot <- image_read("starwars.png")
+babygif <- image_read("babyninja.gif")
+```
+
+
+```{r}
+head(image_info(babygif))
+```
+
+```{r}
+frames <- image_composite(starwarsplot, babygif, offset = "+70+800")
+animation <- image_animate(frames, fps = 10)
+image_write(animation, "starbaby.gif")
+```
+
+
+
+
+
+
+

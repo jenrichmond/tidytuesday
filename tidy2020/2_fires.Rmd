@@ -1,0 +1,65 @@
+---
+title: "week 2"
+author: "Jen Richmond"
+date: "07/01/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tidyverse)
+library(janitor)
+library(tidytuesdayR)
+library(lubridate)
+```
+
+```{r}
+rain <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2020/2020-01-07/rainfall.csv')
+temp <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2020/2020-01-07/temperature.csv')
+
+```
+
+```{r}
+syd_rain <- rain %>%
+  filter(city_name == "Sydney") %>%
+  na.omit() 
+  
+
+```
+Get date as date by pasting year-month-day, make year numeric so that ifelse works, then make new column for 2019 vs other years, then day of year 1-365
+```{r}
+syd_rain$date <- paste(syd_rain$year, syd_rain$month, syd_rain$day, sep="-") %>% 
+  ymd() %>% 
+  as.Date() 
+
+syd_rain$year <- as.numeric(syd_rain$year)
+
+syd_rain <- syd_rain %>%
+  mutate(thisyear = ifelse(year == "2019", "yes", "no")) 
+
+syd_rain$dayofyear <- yday(syd_rain$date)
+
+syd_rain <- syd_rain %>%
+  group_by(dayofyear) %>%
+  mutate(percentile = percent_rank(rainfall))
+
+```
+
+
+```{r}
+syd_rain %>%
+  ggplot(aes(x = dayofyear, y = rainfall, colour = thisyear)) +
+  geom_point() +
+  theme(legend.position = "none") 
+```
+
+```{r}
+syd_rain %>%
+  group_by(dayofyear) %>%
+  summarise(meanrain = mean(rainfall, na.rm = FALSE))
+```
+
+

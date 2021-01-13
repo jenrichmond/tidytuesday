@@ -1,0 +1,89 @@
+---
+title: "squirrely"
+author: "Jen Richmond"
+date: "16/10/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tidyverse)
+library(nycsquirrels18)
+library(janitor)
+
+#load squirrel data from package
+squirrels <- squirrels %>%
+  rename(id = unique_squirrel_id, combo_fur = combination_of_primary_and_highlight_color)
+
+names(squirrels)
+```
+
+How many adult vs. juvenile?
+```{r}
+squirrels %>%
+  tabyl(age)
+```
+
+
+```{r}
+squirrels %>%
+  tabyl(primary_fur_color)
+```
+
+```{r}
+squirrels %>%
+  tabyl(highlight_fur_color)
+```
+
+
+# make separte dfs for each beh type
+```{r}
+colour <- squirrels %>%
+  select(long:specific_location)
+
+move <- squirrels %>%
+  select(long:age, location:foraging)
+
+noise <- squirrels %>%
+  select(long:age, location:specific_location, kuks:moans)
+
+tails <- squirrels %>%
+  select(long:age, location:specific_location, tail_flags:tail_twitches)
+
+human <- squirrels %>%
+  select(long:age, location:specific_location, approaches:runs_from)
+
+```
+
+
+
+# squirrel interactions with humans
+```{r}
+names(human)
+
+human_long <- human %>%
+  pivot_longer(names_to = "human", values_to = "response", cols = approaches:runs_from) %>%
+  select(id, age, human, response)
+
+human_long %>%
+  group_by(human) %>%
+  summarise(count = sum(response), n = n(), prop = count/n)
+```
+
+
+# moving
+```{r}
+names(move)
+
+move_long <- move %>%
+  pivot_longer(names_to = "move", values_to = "response", cols = running:foraging) %>%
+  select(id, age, move, response)
+
+move_long %>%
+  group_by(move) %>%
+  summarise(count = sum(response), n = n(), prop = count/n)
+```
+

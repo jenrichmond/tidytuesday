@@ -1,0 +1,32 @@
+---
+title: "fastfood"
+author: "Jen Richmond"
+date: "10/09/2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+```{r}
+library(tidyverse)
+library(skimr)
+```
+
+```{r}
+fastfood <- read_csv("fastfood_calories.csv") 
+ 
+```
+
+```{r}
+skim(fastfood)
+```
+
+
+
+```{r}
+summary <- fastfood %>% 
+group_by(restaurant) %>% 
+  summarise(sugar = mean(sugar), salt = mean(sodium), fat = mean(total_fat), calories = mean(calories))
+```
+

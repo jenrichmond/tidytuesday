@@ -1,0 +1,64 @@
+---
+title: "pets"
+author: "Jen Richmond"
+date: "16/10/2019"
+output: html_document
+---
+
+```{r}
+library(tidyverse)
+library(janitor)
+library(lubridate)
+
+```
+
+```{r}
+pets <- readr::read_csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2019/2019-03-26/seattle_pets.csv") %>% 
+  select(-secondary_breed) %>%
+  na.omit()
+
+
+```
+
+```{r}
+cleanpets <- pets %>%
+  tabyl(animals_name) %>%
+  arrange(-n) 
+  
+
+```
+
+```{r}
+yearpets <- pets %>%
+  mutate(license_issue_date = mdy(license_issue_date), 
+         year_issue_date = year(license_issue_date))
+``` 
+
+```{r}
+yearpets %>%
+  group_by(year_issue_date, animals_name) %>%
+  count() %>%
+  arrange(desc(n)) %>%
+  ungroup() %>%
+```
+
+```{r}
+top_10 <- pets %>%
+  filter(
+  group_by(Species)
+  summarise(count)
+```
+
+```{r}
+pets %>%
+  filter(species == "Goat") %>% 
+  group_by(animals_name) %>%
+  count() %>%
+  arrange(-n) 
+```
+
+```{r}
+pets %>%
+  tabyl(species)
+```
+

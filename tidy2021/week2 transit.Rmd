@@ -1,0 +1,182 @@
+tidy---
+title: "Week2 transit"
+date: 2021-01-05
+output: html_output
+---
+
+This week I used Tidu Tuesday to play around with a custom ggplot theme. It is mostly classic with bigger fonts, more white space and shifted titles. Load it from theme_jen.R. 
+
+
+```{r setup, include=FALSE}
+
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+library(tidytuesdayR)
+library(ggeasy)
+library(here)
+
+```
+
+# Load the weekly Data
+
+Dowload the weekly data and make available in the `tt` object.
+
+```{r Load}
+
+tt <- tt_load("2021-01-05")
+
+```
+
+
+# Readme
+
+Take a look at the readme for the weekly data to get insight on the dataset.
+This includes a data dictionary, source, and a link to an article on the data.
+
+```{r Readme, eval = interactive()}
+
+tt
+
+```
+
+
+# Glimpse Data
+
+Take an initial look at the format of the data available.
+
+```{r Glimpse}
+
+tt %>% 
+  map(glimpse)
+
+```
+
+# Wrangle
+
+Explore the data and process it into a nice format for plotting! Access each dataset by name by using a dollarsign after the `tt` object and then the name of the data set.
+
+```{r Wrangle}
+
+cost <- tt$transit_cost
+
+
+```
+
+
+# Visualize
+
+Using your processed dataset, create your unique visualization.
+
+```{r Visualize}
+
+cost %>%
+  group_by(country) %>%
+  summarise(meancost = mean(cost_km_millions)) %>%
+  arrange(-meancost) %>%
+  head(5) %>%
+  ggplot(aes(x = reorder(country, meancost), y = meancost, fill = country)) +
+  geom_col() +
+  labs(y= "Average cost per km (million)", x = "Country", 
+       title = "Countries with the most expensive transit projects", 
+       caption = "why is the US so $$$$?") +
+  theme_jen() +  # my OWN ggplot theme, mostly theme_classic with bigger fonts and more white space
+  easy_remove_legend() +  # from ggeasy package
+  easy_expand_y_axis()    # makes the bars sit on the x axis
+                            # my OWN ggeasy-esque function, a wrapper for scale_y_continuous(expand = c(0,0))
+ 
+   
+```
+
+```{r}
+
+subset <- c("US", "UK", "SG", "NZ", "QA") 
+
+cost %>%
+  filter(country %in% subset) %>%
+  ggplot(aes(x = length, y = cost_km_millions, colour = city)) +
+  geom_point(size = 2) +
+  labs(x = "Length of track (km)", y = "Cost per km (millions)", title = "Do longer routes make transit projects expensive?")
+
+
+cost %>%
+  filter(country %in% subset) %>%
+  ggplot(aes(x = length, y = cost_km_millions, colour = city, size = tunnel)) +
+  geom_point() +
+  labs(x = "Length of track (km)", y = "Cost per km (millions)", title = "Do tunnels make transit projects expensive?")
+
+cost %>%
+  filter(country %in% subset) %>%
+  ggplot(aes(x = length, y = cost_km_millions, colour = city, size = stations)) +
+  geom_point() +
+  labs(x = "Length of track (km)", y = "Cost per km (millions)", title = "Do stations make transit projects expensive?")
+```
+
+looks like just NY that is super expensive, filter out new york is the US still more expensive. 
+
+```{r}
+top5_noNY <- cost %>%
+  filter(city != "New York") %>%
+  group_by(country) %>%
+  summarise(meancost = mean(cost_km_millions)) %>%
+  arrange(-meancost) %>%
+  head(5)
+
+top5_noNY %>%
+  ggplot(aes(x = reorder(country, meancost), y = meancost, fill = country)) +
+  geom_col() +
+  labs(y= "Cost per km (millions)", x = "Country") 
+```
+
+
+# custom theme
+
+I dislike the grey/gridline style that is the default ggplot theme_grey(). theme_classic() is the closest to the APAish style I am looking for. I'd like the font to be bigger and ideally I'd like the bars to always sit on the x axis. 
+
+```{r}
+top5_noNY %>%
+  ggplot(aes(x = reorder(country, meancost), y = meancost, fill = country)) +
+  geom_col() +
+  labs(y= "Cost per km (millions)", x = "Country") +
+  theme_classic() 
+```
+Working on a custom theme over in theme_jen.R. Loading it here (and adding it to my RProfile)
+```{r}
+source(here("other_scripts", "theme_jen.R"))
+```
+
+
+```{r}
+
+top5_noNY %>%
+  ggplot(aes(x = reorder(country, meancost), y = meancost, fill = country)) +
+  geom_col() +
+  labs(y= "Cost per km (millions)", x = "Country") +
+  labs(title = "Test plot", subtitle = "subtitle", caption = "caption here") +
+  theme_jen() +
+  easy_expand_y_axis()
+    
+
+```
+
+
+
+```{r}
+ggsave("test3.png")
+```
+
+
+ 
+
+# Save Image
+
+Save your image for sharing. Be sure to use the `#TidyTuesday` hashtag in your post on twitter! 
+
+```{r}
+
+# This will save your most recent plot
+ggsave(
+  filename = "My TidyTuesday Plot.png",
+  device = "png")
+
+```
