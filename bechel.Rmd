@@ -21,6 +21,8 @@ I will try and model the kind of commenting we want to see you doing as you docu
 
 # load packages
 
+Making a test change. 
+
 Here I am using the tidyverse package, which includes ggplot for data vis and dplyr for data wrangling. I'm also using the janitor package which is useful for counting frequency and the gt() package which makes nice tables. 
 
 I really dislike the default grey background with gridlines theme (theme_grey) that ggplot uses, so I am using `theme_set(theme_classic())` here to change the default theme for all of my plots in this Rmd doc. 
