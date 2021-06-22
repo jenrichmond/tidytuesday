@@ -1,0 +1,282 @@
+---
+title: "Tidy Tuesday: The Bechdel Test"
+author: "Jen Richmond"
+date: "10/06/2021"
+output:
+  prettydoc::html_pretty:
+    theme: hpstr
+    highlight: github
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, messages = FALSE)
+
+```
+
+This week I've been practicing my data viz with some Tidy Tuesday data. If you are looking for interesting datasets to try out your data viz skills on, the TidyTuesday repo is a really good place to start. Each week Tom Mock posts a dataset to [the github repo](https://github.com/rfordatascience/tidytuesday), #rstats people from all over have a go at making a visualisation and then they post their plots to twitter with the hashtag #TidyTuesday. 
+
+I will try and model the kind of commenting we want to see you doing as you document the code in your learning logs and verification reports. 
+
+> note: this Rmd theme comes from the [`prettydoc` package](https://prettydoc.statr.me/)
+
+# load packages
+
+Here I am using the tidyverse package, which includes ggplot for data vis and dplyr for data wrangling. I'm also using the janitor package which is useful for counting frequency and the gt() package which makes nice tables. 
+
+I really dislike the default grey background with gridlines theme (theme_grey) that ggplot uses, so I am using `theme_set(theme_classic())` here to change the default theme for all of my plots in this Rmd doc. 
+
+```{r message=FALSE, warning=FALSE}
+library(tidyverse) 
+library(janitor)
+library(gt)
+
+theme_set(theme_classic())
+```
+
+# read in the data
+
+The nice thing about Tidytuesday data is that you can use read the data straight from the TidyTuesday repo using the URL. This dataset is about the movies and whether they pass the Bechdel test. The Bechdel test is a test of gender representaiton in film. Movies get a score of 0, 1, 2, or 3, depending on whether there are two named female characters in the film, they have a conversation with each other, and that conversation is not about a man. 
+
+Here I am reading the data using the `read_csv()` function and using `glimpse()` to get an idea of what variables are in the dataset and what kind of data R thinks each variable is. 
+
+```{r message=FALSE, warning=FALSE}
+bechdel <- read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2021/2021-03-09/raw_bechdel.csv')
+
+glimpse(bechdel)
+
+```
+
+
+The `summary()` function is useful when you want to get an idea of the range of years in the dataset (all the way back to 1888).  It also tells me that the mean rating across the 8839 films is 2.1 (not great). I wonder whether bechdel scores have changed over time?
+
+```{r}
+summary(bechdel)
+```
+
+# Has the number of movies getting Bechdel scores of 3 improved over time?
+
+Here I am plotting the ratings (0,1,2,3) as a function of year using `geom_point()`. It is hard to see whether there are more ratings of 3 on the right side of the graph though, because here are 8000+ movies on the plot and all the points are on top of each other. 
+
+```{r}
+bechdel %>%
+  ggplot(aes(x = year, y = rating)) + 
+  geom_point()
+```
+
+
+Here I am adding a tiny bit of noise to the points so they don't all end up on top of each other using `geom_jitter()`. Still a bit hard to tell what is going on due to the density of the points. I really love violin plots, maybe `geom_violin()` would help? 
+
+```{r}
+bechdel %>%
+  ggplot(aes(x = year, y = rating)) + 
+  geom_jitter()
+```
+```{r}
+bechdel %>%
+  ggplot(aes(x = year, y = rating)) + 
+  geom_violin()
+```
+
+
+
+Hahaha oops no, violin is not what I need...
+
+Changing tack... I think I need to summarise the data a little bit. Rather than plotting scores for every movie in the dataset, I want to know how many movies each year got a rating of 0, 1, 2 or 3. 
+
+The janitor package contains lots of useful cleaning related functions, like `clean_names()`, but it is also really helpful when you are looking to count how many different kinds of observations there are (i.e constructing frequency tables). 
+
+Here I am using the `tabyl()` function and asking it to count how many movies get each of the different ratings, each year. I am assigning the output to a new dataframe called rating_year, so that I can use it in my plots later on. And then displaying the dataframe as a table using `gt()` so it appears in my document. The table ends up being VERY wide. 
+
+```{r}
+rating_year <- bechdel %>%
+  tabyl(rating, year)
+
+rating_year %>%
+  gt()
+```
+
+OK I can see that my new rating_year dataframe has 4 observations of 129 variables. It has counts of how many 0, 1, 2, and 3s there were for all 128 years and each year is in a separate column. 
+
+Now I want to plot those counts by year, but to do that I need to make the data long. I want the data in 3 columns, one with the ratings (0,1,2,3), one with the years, and one with the count of how many movies got that rating in that year. Luckily the `pivot_longer()` function makes this transformation really easy. 
+
+Here I am taking my rating_year dataframe (which is wide) and piping it into `pivot_longer()`. I'm telling R that I want the names of all the wide variables to go into a new column called "year" and I want all the values to go into a new column called "count", and the range of variables that are currently wide that I want to be long are everything from the 2nd to the 129th variable. 
+
+I am creating a new thing in my enviornment called rating_year_long and using `glimpse()` to show that it now has 512 observations of 3 variables. 
+
+
+```{r}
+rating_year_long <- rating_year %>%
+  pivot_longer(names_to = "year", values_to ="count", 2:129) 
+
+glimpse(rating_year_long)
+
+```
+
+I can also see that R thinks my rating variable is double (aka numeric) and my year variable is characters, which might cause me struggles down the track, but lets see...
+
+Here I want to plot how ratings have changed over time, so I am plotting year on the x axis and count on the y axis. I am using colour to differentiate between 0, 1, 2, and 3 ratings. 
+
+```{r}
+
+rating_year_long %>%
+  ggplot(aes(x = year, y = count, colour = rating)) +
+  geom_point() 
+
+```
+
+
+OK there are a few problems with this plot that I would like to work out how to fix:
+
+1. the year on the x axis is UNREADABLE, I think that is because R thinks year in characters and it is trying to print them all
+2. the colour scale ranges from dark blue to light blue. This is what R does when it is trying to map a continuous numeric variable to a colour palette. I think I need to make the rating a factor to get 4 distinct colours for 0, 1, 2, and 3 ratings. 
+
+First, lets make year numeric and see what that does to the x axis. Here I am using `as.numeric()` to change my year variable from characters to numeric, then `glimpse()` to check that it did what I want. 
+```{r}
+
+rating_year_long$year <- as.numeric(rating_year_long$year)
+
+glimpse(rating_year_long)
+
+```
+
+Better, year is now double. Ok what does that plot look like now ? 
+```{r}
+
+rating_year_long %>%
+  ggplot(aes(x = year, y = count, colour = rating)) +
+  geom_point() 
+```
+
+
+Yay- fewer years on the x axis is definitely better, but I'd like a few more ticks so I can see what the range of the years in the dataset are more clearly. To change the number of "ticks" you can use `scale_x_continuous()` and specify the breaks manually. Here I am telling it I want the x axis to show 1888 to 2021, with ticks every 10 years.
+
+```{r}
+rating_year_long %>%
+  ggplot(aes(x = year, y = count, colour = rating)) +
+  geom_point() +
+  scale_x_continuous(breaks=seq(1888,2021,10))
+```
+
+
+Awesome...ok lets deal with the colour scale. So at the moment R is treating the ratings as numeric and trying to map them to a continuous colour scale. Lets convert the ratings to a factor (there are only 4 values in the data) and see if we can get distinct colours. 
+
+Here I am using `as.factor()` to change the kind of data that R thinks the ratings are from numeric to factor and then `glimpse()` to check it has done what I want. 
+
+```{r}
+rating_year_long$rating <- as.factor(rating_year_long$rating)
+
+
+glimpse(rating_year_long)
+
+```
+
+Excellent, now trying the plot again. 
+
+```{r}
+
+rating_year_long %>%
+  ggplot(aes(x = year, y = count, colour = rating)) +
+  geom_point() +
+  scale_x_continuous(breaks=seq(1888,2021,10))
+```
+
+Woot! It seems that there has definitely been an increase in the number of movies getting a score of 3 on the Bechdel test, but it is also clear that there has just been a MASSIVE increase since the 1970s in the number of movies being produced. In this case, raw counts make it hard to see whether we have made much of an improvement in the representation of women in film. 
+
+What if we turned this data into proportions? Has the proportion of films that get a 3 score improved over time?
+
+OK how to do this??? maybe `group_by()` + `summarise()`??
+
+Here I am taking my long data (always easier to get R do do stuff when your data is long) and piping it into a `group_by()`. I want scores for the total number of films and the proportion of films getting a 3, separately for each year, so I am going to summarise the number of films by getting sum of the counts. 
+
+OK now I can use my new total dataframe to plot how the number of films produced has changed.  
+
+```{r}
+total <- rating_year_long %>%
+  group_by(year) %>%
+  summarise(total = sum(count))
+
+total %>%
+  ggplot(aes(x = year, y = total)) +
+  geom_point()
+
+```
+
+
+Now I want to count the number of films that get a score of 3 each year. Here I am filtering for just the counts of films that get a score of 3 and then doing the same group_by() + summarise() as above. 
+
+```{r}
+rating3 <- rating_year_long %>%
+  filter(rating == 3) %>%
+  group_by(year) %>%
+  summarise(total3 = sum(count))
+```
+
+This method has created 2 separate dataframes, one with the total number of films each year (total) and one with the number of films that score a 3 each year (rating3). There is probably a way to do that without making separate dataframes (but I can't work that out right now) so now I need to join them back together.
+
+Because my two dataframes have the same number of observations, I can use the `cbind()` function (which binds by columns). I end up with 2 year variables, but that is probably ok. 
+
+> note if there weren't the same number of obs in each df, I would need to use one of the `join()` functions from dplyr to join the dataframes by the values in one of the variables. 
+
+```{r}
+rating_total <- cbind(total, rating3)
+
+glimpse(rating_total)
+```
+
+Now that I ahve joined the totals and the rating3 counts together, I can calculate proportions by using `mutate()` to make a  new column. 
+
+```{r eval= FALSE}
+proportion <- rating_total %>%
+  mutate(proportion = total3 / total) ## not ok to have 2 x year columns
+
+
+```
+
+OK the chunk above threw an error because apparently it is not ok to have two year columns, so I am trying again below after dropping one of the year columns using select(-1) i.e the 1st variable 
+```{r}
+
+proportion <- rating_total %>%
+  select(-1) %>%
+  mutate(proportion = total3 / total)
+
+```
+
+Now to plot!
+
+```{r} 
+proportion %>%
+  ggplot(aes(x = year, y = proportion)) +
+geom_point() +
+  scale_x_continuous(breaks=seq(1888,2021,10)) +
+    scale_y_continuous(limits = c(0.0,1.0))
+```
+
+Well that is a disappointing rate of change! 
+
+Filtering for just films since 1980 and adding `geom_smooth()` below. It seems that 2020 was a particularly good year with close to 80% of films scoring 3, however, important to bear in mind that last year there were less than half the number of films made relative to 2019. 
+
+```{r message=FALSE, warning=FALSE}
+proportion %>%
+  filter(year > 1980) %>%
+  ggplot(aes(x = year, y = proportion)) +
+geom_point() +
+  geom_smooth() +
+  scale_x_continuous(breaks=seq(1980,2021,10)) +
+    scale_y_continuous(limits = c(0.0,1.0))
+```
+
+# Challenges
+
+- as always R makes assumptions about what kind of data you have and those assumptions have implications for what your plot ends up looking like. 
+  + NOTE Dani has some useful resources re data types and how to "coerce" data into being the type you need here https://psyr.djnavarro.net/data-types.html
+
+- I tried for a long time to get both totals and proportions in a single `group_by()` + `summarise()` (thus avoiding the need to make two dataframes and then join them back together) but no luck... maybe this is a situation where making the data wide again (with separate columns for each rating) so that you can calculate proportions across columns might work better. 
+
+### Hadley Wickham (head of RStudio) just typing R code
+
+![](https://i.imgur.com/7J1bEaJ.gif)
+
+
+
+
+
